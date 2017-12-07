@@ -28,8 +28,10 @@ void Graph::insertEdge(Edge& e) // Edge e(vtx_1 -> vtx_2)
 	Vertex vtx_1, vtx_2;
 	Vertex* pVtx;
 	int vtx_1_ID, vtx_2_ID;
-	vtx_1 = *e.getpVrtx_1();
-	vtx_2 = *e.getpVrtx_2();
+	vtx_1 = e.getVertex_1();
+	vtx_2 = e.getVertex_2();
+	//vtx_1 = *e.getpVrtx_1();
+	//vtx_2 = *e.getpVrtx_2();
 	vtx_1_ID = vtx_1.getID();
 	vtx_2_ID = vtx_2.getID();
 	if (pVrtxArray[vtx_1_ID] == NULL) {

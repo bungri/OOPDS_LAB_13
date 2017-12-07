@@ -212,7 +212,7 @@ void BreadthFirstSearch::dijkstraBFS(Vertex & s, int * pParent)
 		{
 			cost = pLeastCost[i];
 			if (cost == PLUS_INF)
-				cout << setw(2) << i << " +oo, ";
+				cout << setw(2) << i << "  +oo, ";
 			else
 				cout << setw(2) << i << setw(5) << pLeastCost[i] << ", ";
 		} cout << endl;
@@ -450,7 +450,7 @@ void BreadthFirstSearch::printDistMtrx()
 		for (int j = 0; j<num_nodes; j++) {
 			dist = ppDistMtrx[i][j];
 			if (dist == PLUS_INF)
-				cout << " +oo";
+				cout << "  +oo";
 			else
 				cout << setw(5) << dist;
 		}
@@ -474,4 +474,9 @@ void BreadthFirstSearch::findShortestPath(Vertex &s, Vertex &target, VertexList&
 
 void BreadthFirstSearch::ShortestPathsTree(Vertex & s)
 {
+	initialize();
+	start = s;
+	initDistMtrx();
+	printDistMtrx();
+	dijkstraBFS(start, pParent);
 }

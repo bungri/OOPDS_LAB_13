@@ -201,7 +201,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 	DataLink ***pppDL;
 	Vertex *pVrtx, *pMyVrtx;
 	int myNetAddr;
-	Packet *pPkt, newPkt;
+	Packet *pPkt;
 	DataLink* pDL;
 	UINT_32 srcAddr;
 	ostream *pFout;
@@ -230,6 +230,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 	pNetTopology->initDistMtrx();
 	pVrtx = pNetTopology->getGraph().getpVrtxArray();
 	pMyVrtx = &(pVrtx[myNetAddr]);
+	EnterCriticalSection(pThrParam->pCS);
 	pNetTopology->ShortestPathsTree(*pMyVrtx);
 	pPrev = pNetTopology->getpParent();
 	num_nodes = pNetTopology->getGraph().getNumVertices();
@@ -237,6 +238,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 	// initialize packet forwarding table
 	EnterCriticalSection(pThrParam->pCS);
 	pForwardTable = new int[num_nodes];
+	LeaveCriticalSection(pThrParam->pCS);
 	for (dst = 0; dst < num_nodes; dst++)
 	{
 		int nxt;
@@ -289,19 +291,81 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 		Sleep(1);
 	} // end for( ; ; ) for generation of packets
 
+	EnterCriticalSection(pThrParam->pCS);
 	cout << "=== Router[" << myNetAddr << "] generated total " << num_packets_generated << " packets " << endl;
+
+	/*
+	for (int i = 0; i < num_nodes; i++)
+	{
+	cout << "pForwardTable [" << i << "] = " << pForwardTable[i] << endl;
+	}
+	*/
+	LeaveCriticalSection(pThrParam->pCS);
+	
+
 	// packet forwarding as transit node and packet processing as destination node
 	int source;
 	int total_processed = 0;
 	int received_by_this_node = 0;
 	int hop_count;
 
-	while ((*pTotal_received < (num_nodes * num_nodes)) || (received_by_this_node < num_nodes))
+	while ((*pTotal_received < (num_nodes * num_nodes)) ) //&& (received_by_this_node < num_nodes)
 	{
 		for (int src = 0; src < num_nodes; src++)
 		{
-			/*. . . .*/ // checking data links and forwarding/handling packets
-				Sleep(1);
+			// checking data links and forwarding/handling packets
+			pDL = pppDL[src][myNetAddr];
+			if (pDL == NULL)
+				continue;
+			
+			EnterCriticalSection(pThrParam->pCS);
+			Packet newPkt = pDL->front(), *pNewPkt = &newPkt;
+			if (pNewPkt->getSeqNo() == -1)
+			{
+				LeaveCriticalSection(pThrParam->pCS);
+				continue;
+			}
+			pDL->dequeue();
+			LeaveCriticalSection(pThrParam->pCS);
+			pNewPkt->pushRouteNode(myNetAddr);
+			
+			if (pNewPkt->getDstAddr() == myNetAddr)
+			{
+				EnterCriticalSection(pThrParam->pCS);
+				cout << "	Router[" << myNetAddr << "] received a packet from [" << pNewPkt->getSrcAddr() << "] to [" << pNewPkt->getDstAddr() << "], route : ";
+				for (int i = 0; i < pNewPkt->getHopCount(); )
+				{
+					cout << pNewPkt->getRouteNodes(i);
+					if (i++ < pNewPkt->getHopCount() - 1)
+						cout << " -> ";
+				}
+				cout << endl;
+				cout << "	Router[" << myNetAddr << "] currently received " << ++received_by_this_node << "packets." << endl;
+				*pTotal_received = *pTotal_received + 1;
+				LeaveCriticalSection(pThrParam->pCS);
+			}
+			else
+			{
+				next_node = pForwardTable[pNewPkt->getDstAddr()];
+				DataLink* pSDL = pThrParam->pppDL[myNetAddr][next_node];
+
+				EnterCriticalSection(pThrParam->pCS);
+				if (pSDL != NULL)
+					pSDL->enqueue(*pNewPkt);
+				else
+					cout << " Error : pppDL[][] is NULL" << endl;
+
+				cout << "			#Router[" << myNetAddr << "] forwarded a packet from [" << pNewPkt->getSrcAddr() << "] to [" << pNewPkt->getDstAddr() << "], route : ";
+				for (int i = 0; i < pNewPkt->getHopCount(); )
+				{
+					cout << pNewPkt->getRouteNodes(i);
+					if (i++ < pNewPkt->getHopCount() - 1)
+						cout << " -> ";
+				}
+				cout << endl;
+				LeaveCriticalSection(pThrParam->pCS);
+			}
+			Sleep(100);
 		} // end for
 	} // end while
 
