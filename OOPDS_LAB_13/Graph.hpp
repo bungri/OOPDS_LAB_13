@@ -20,7 +20,11 @@ public:
 public:
 	class Vertex
 	{
-		friend ostream& operator<<(ostream& fout, Vertex v) { /*. . . .*/ }
+		friend ostream& operator<<(ostream& fout, Vertex v)
+		{
+			fout << v.getName();
+			return fout;
+		}
 	public:
 		Vertex() : name(), ID(-1) {}
 		Vertex(string n, int id, VertexStatus vs) : name(n), ID(id), vtxStatus(vs) { }
@@ -44,13 +48,33 @@ public:
 public:
 	class Edge
 	{
-		friend ostream& operator<<(ostream& fout, Edge& e) { /*. . . .*/ }
+		friend ostream& operator<<(ostream& fout, Edge& e)
+		{
+			fout << "Edge(" << e.getVertex_1() << ", " << e.getVertex_2();
+			fout << ", d(" << setw(2) << e.getDistance() << "))";
+			return fout;
+		}
+	public:
 	public:
 		Edge() : pVrtx_1(NULL), pVrtx_2(NULL), distance(PLUS_INF) {}
 		Edge(Vertex v1, Vertex v2, int d) :vrtx_1(v1), vrtx_2(v2), distance(d), pVrtx_1(NULL),
 			pVrtx_2(NULL), edgeStatus(EDGE_UN_VISITED) { }
-		void endVertices(VtxList& vtxList) { /*. . . .*/ }
-		Vertex opposite(Vertex v) { /*. . . .*/ }
+		void endVertices(VtxList& vtxList)
+		{
+			vtxList.push_back(*pVrtx_1);
+			vtxList.push_back(*pVrtx_2);
+		}
+		Vertex opposite(Vertex v)
+		{
+			if (v == *pVrtx_1)
+				return *pVrtx_2;
+			else if (v == *pVrtx_2)
+				return *pVrtx_1;
+			else {
+				//cout << "Error in opposite()" << endl;
+				return Vertex(NULL);
+			}
+		}
 		Vertex getVertex_1() { return vrtx_1; }
 		Vertex getVertex_2() { return vrtx_2; }
 		Vertex* getpVrtx_1() { return pVrtx_1; }
@@ -59,8 +83,8 @@ public:
 		void setpVrtx_1(Vertex* pV) { pVrtx_1 = pV; }
 		void setpVrtx_2(Vertex* pV) { pVrtx_2 = pV; }
 		void setDistance(int d) { distance = d; }
-		bool operator!=(Edge e) { /*. . . .*/ }
-		bool operator==(Edge e) { /*. . . .*/ }
+		bool operator!=(Edge e) { return ((*pVrtx_1 != e.getVertex_1()) || (*pVrtx_2 != e.getVertex_2())); }
+		bool operator==(Edge e) { return ((*pVrtx_1 == e.getVertex_1()) && (*pVrtx_2 == e.getVertex_2())); }
 		void setEdgeStatus(EdgeStatus es) { edgeStatus = es; }
 		EdgeStatus getEdgeStatus() { return edgeStatus; }
 	private:
@@ -79,7 +103,21 @@ public:
 	typedef std::list<Vertex>::iterator VtxItor;
 	typedef std::list<Edge>::iterator EdgeItor;
 	Graph() : pVrtxArray(NULL), pAdjLstArray(NULL) {} // default constructor
-	Graph(int num_nodes) : pVrtxArray(NULL), pAdjLstArray(NULL) { /*. . . .*/ }
+	Graph(int num_nodes) : pVrtxArray(NULL), pAdjLstArray(NULL)
+	{
+		typedef Edge* EdgePtr;
+		num_vertices = num_nodes;
+		pVrtxArray = new Graph::Vertex[num_vertices];
+		for (int i = 0; i<num_nodes; i++)
+		{
+			pVrtxArray[i] = NULL;
+		}
+		pAdjLstArray = new EdgeList[num_vertices];
+		for (int i = 0; i<num_vertices; i++)
+		{
+			pAdjLstArray[i].clear();
+		}
+	}
 	void vertices(VtxList& vtxLst);
 	void edges(EdgeList&);
 	bool isAdjacentTo(Vertex v, Vertex w);

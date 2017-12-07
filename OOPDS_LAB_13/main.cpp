@@ -231,7 +231,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 	pVrtx = pNetTopology->getGraph().getpVrtxArray();
 	pMyVrtx = &(pVrtx[myNetAddr]);
 	pNetTopology->ShortestPathsTree(*pMyVrtx);
-	pPrev = pNetTopology->getpPrev();
+	pPrev = pNetTopology->getpParent();
 	num_nodes = pNetTopology->getGraph().getNumVertices();
 
 	// initialize packet forwarding table
@@ -267,8 +267,27 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 	// packet generations as source node
 	for (int i = 0; i < num_nodes; i++)
 	{
-		/*. . . . .*/ // packet generation and enqueuing to appropriate data link
-	}
+		dst = i % num_nodes;
+		pPkt = new Packet(myNetAddr, dst, i);
+
+		pPkt->pushRouteNode(myNetAddr); // record route
+		next_node = pForwardTable[dst];
+		EnterCriticalSection(pThrParam->pCS);
+		DataLink* pDL = pThrParam->pppDL[myNetAddr][next_node];
+		if (pDL != NULL)
+			pDL->enqueue(*pPkt);
+		else
+			cout << " Error : pppDL[][] is NULL" << endl;
+
+		*pFout << "Router[" << myNetAddr << "]: (";
+		*pFout << num_packets_generated << ")-th packet (";
+		*pFout << pPkt->getSrcAddr() << " -> " << pPkt->getDstAddr();
+		*pFout << ", seqNo: " << pPkt->getSeqNo() << ")\n";
+		LeaveCriticalSection(pThrParam->pCS);
+
+		num_packets_generated++;
+		Sleep(1);
+	} // end for( ; ; ) for generation of packets
 
 	cout << "=== Router[" << myNetAddr << "] generated total " << num_packets_generated << " packets " << endl;
 	// packet forwarding as transit node and packet processing as destination node

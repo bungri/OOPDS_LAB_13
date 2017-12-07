@@ -10,9 +10,11 @@ Packet::Packet(UINT_32 srcAddr, UINT_32 dstAddr, UINT_32 sN)
 ostream & Packet::printSaddrSeqNo(ostream * pFout)
 {
 	// TODO: 여기에 반환 구문을 삽입합니다.
+	return *pFout;
 }
 
 ostream & Packet::printPacket(ostream * pFout)
 {
 	// TODO: 여기에 반환 구문을 삽입합니다.
+	return *pFout;
 }

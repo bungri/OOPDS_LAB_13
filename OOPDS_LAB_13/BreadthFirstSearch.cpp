@@ -2,7 +2,6 @@
 #include <iomanip>
 #include <list>
 #include <algorithm>
-
 #include "Graph.hpp"
 #include "BreadthFirstSearch.hpp"
 
@@ -15,26 +14,10 @@ typedef std::list<Graph::Vertex>::iterator VertexItor;
 typedef std::list<Graph::Edge> EdgeList;
 typedef std::list<Graph::Edge>::iterator EdgeItor;
 
-void BreadthFirstSearch::initialize()
-{
-	VertexList verts;
-	graph.vertices(verts);
-	for (VertexItor pv = verts.begin(); pv != verts.end(); ++pv)
-	{
-		unvisit(*pv);
-	}
-	EdgeList edges;
-	graph.edges(edges);
-	for (EdgeItor pe = edges.begin(); pe != edges.end(); ++pe)
-		unvisit(*pe);
-
-	done = false;
-}
-
-// TRAVERSAL **************************************************************************************************************
+// T R A V E R S A L *****************************************************************************
 
 enum BFS_PROCESS_STATUS { NOT_SELECTED, SELECTED };
-void BreadthFirstSearch::bfsTraversal(Vertex & v, Vertex & target, VertexList & path)
+void BreadthFirstSearch::bfsTraversal(Vertex& start, Vertex& target, VertexList& path)
 {
 	int** ppDistMtrx;
 	int* pLeastCost;
@@ -44,10 +27,11 @@ void BreadthFirstSearch::bfsTraversal(Vertex & v, Vertex & target, VertexList & 
 	BFS_PROCESS_STATUS* pBFS_Process_Stat;
 
 	Vertex* pVrtxArray;
-	Vertex vrtx, *pPrevVrtx;
+	Vertex vrtx, *pPrevVrtx, v;
 	Edge e;
 	int start_vrtxid, target_vrtxid, curVrtx_ID, vrtxID;
 	EdgeList* pAdjLstArray;
+
 
 	pVrtxArray = graph.getpVrtxArray();
 	pAdjLstArray = graph.getpAdjLstArray();
@@ -62,46 +46,33 @@ void BreadthFirstSearch::bfsTraversal(Vertex & v, Vertex & target, VertexList & 
 	pBFS_Process_Stat = new BFS_PROCESS_STATUS[num_nodes];
 
 	// initialize L(n) = w(start, n);
-	for (int i = 0; i < num_nodes; i++)
+	for (int i = 0; i< num_nodes; i++)
 	{
 		pLeastCost[i] = ppDistMtrx[start_vrtxid][i];
 		pPrev[i] = start_vrtxid;
 		pBFS_Process_Stat[i] = NOT_SELECTED;
 	}
-
 	pBFS_Process_Stat[start_vrtxid] = SELECTED;
 	num_selected = 1;
 
 	int round = 0;
-	cout << "\nLeast Cost from start at each round : " << endl;
-	cout << "   |";
-	for (int i = 0; i < num_nodes; i++)
-	{
-		cout << setw(5) << i;
-	} cout << endl;
-	cout << "-----------+";
-	for (int i = 0; i < num_nodes; i++)
-	{
-		cout << setw(5) << "-----";
-	} cout << endl;
 
 	while (num_selected < num_nodes)
 	{
 		round++;
-		cout << setw(2) << round << " |";	//print for debugging
 		cout << "=== round " << round << " ==== " << endl;
 
 		// find a node with LeastCost from the NOT_SELECTED vertex pool
 		minID = -1;
 		minCost = PLUS_INF;
-		for (int i = 0; i < num_nodes; i++) {
+		for (int i = 0; i<num_nodes; i++) {
 			if ((pLeastCost[i] < minCost) && (pBFS_Process_Stat[i] != SELECTED)) {
 				minID = i;
 				minCost = pLeastCost[i];
 			}
 		}
 		if (minID == -1) {
-			cout << "Error in FindShortestPath() -";
+			cout << "Error in FindShortestPath()-";
 			cout << "target is not connected to the start !!" << endl;
 			break;
 		}
@@ -110,7 +81,7 @@ void BreadthFirstSearch::bfsTraversal(Vertex & v, Vertex & target, VertexList & 
 			num_selected++;
 			if (minID == target_vrtxid) // target reached
 			{
-				cout << " reached to the target node !!" << endl;	//print for debugging
+				cout << "reached to the target node !!" << endl;
 				cout << "Least Cost = " << minCost << endl;
 				vrtxID = minID;
 				do {
@@ -123,13 +94,13 @@ void BreadthFirstSearch::bfsTraversal(Vertex & v, Vertex & target, VertexList & 
 				break;
 			}
 		}
-
 		int pLS, ppDistMtrx_i;
-		for (int i = 0; i < num_nodes; i++)
+		for (int i = 0; i<num_nodes; i++)
 		{
 			pLS = pLeastCost[i];
 			ppDistMtrx_i = ppDistMtrx[minID][i];
-			if ((pBFS_Process_Stat[i] != SELECTED) && (pLeastCost[i] >(pLeastCost[minID] + ppDistMtrx[minID][i])))
+			if ((pBFS_Process_Stat[i] != SELECTED) &&
+				(pLeastCost[i] >(pLeastCost[minID] + ppDistMtrx[minID][i])))
 			{ // update distances with relaxation
 				pPrev[i] = minID;
 				pLeastCost[i] = pLeastCost[minID] + ppDistMtrx[minID][i];
@@ -137,24 +108,118 @@ void BreadthFirstSearch::bfsTraversal(Vertex & v, Vertex & target, VertexList & 
 		}
 
 		// print out the pLeastCost[] for debugging
-		for (int i = 0; i < num_nodes; i++)
+		for (int i = 0; i<num_nodes; i++)
 		{
-			int vrtx_id = pVrtxArray[i].getID();
-			int cost = pLeastCost[i];
-			if (cost == PLUS_INF)
-				cout << "  +oo";
-			else
-				cout << setw(5) << pLeastCost[i];
+			cout << (char)(i + 'A') << setw(5) << pLeastCost[i] << ", ";
 		}
 		cout << endl;
+
 	} // end while()
 }
 
-void BreadthFirstSearch::dijkstraBFS(Vertex & s, int * pPrev)
+void BreadthFirstSearch::dijkstraBFS(Vertex & s, int * pParent)
 {
+	int** ppDistMtrx;
+	int* pLeastCost;
+	int num_nodes, num_selected;
+	int minID, minCost;
+	BFS_PROCESS_STATUS* pBFS_Process_Stat;
+
+	Vertex* pVrtxArray;
+	Vertex vrtx, *pPrevVrtx, v;
+	Edge e;
+	int start_vrtxid, target_vrtxid, curVrtx_ID, vrtxID;
+	EdgeList* pAdjLstArray;
+
+
+	pVrtxArray = graph.getpVrtxArray();
+	pAdjLstArray = graph.getpAdjLstArray();
+	start_vrtxid = start.getID();
+
+	num_nodes = graph.getNumVertices();
+	ppDistMtrx = getppDistMtrx();
+
+	pLeastCost = new int[num_nodes];
+	pBFS_Process_Stat = new BFS_PROCESS_STATUS[num_nodes];
+
+	// initialize L(n) = w(start, n);
+	for (int i = 0; i< num_nodes; i++)
+	{
+		pLeastCost[i] = ppDistMtrx[start_vrtxid][i];
+		pParent[i] = start_vrtxid;
+		pBFS_Process_Stat[i] = NOT_SELECTED;
+	}
+	pBFS_Process_Stat[start_vrtxid] = SELECTED;
+	num_selected = 1;
+
+	int round = 0;
+	int cost;
+
+	cout << "\nLeast Cost from start at each round : " << endl;
+	while (num_selected < num_nodes)
+	{
+		round++;
+		cout << "round [" << setw(2) << round << "] ";
+		// find current node with LeastCost
+		minID = -1;
+		minCost = PLUS_INF;
+		for (int i = 0; i<num_nodes; i++)
+		{
+			if ((pLeastCost[i] < minCost) && (pBFS_Process_Stat[i] != SELECTED)) {
+				minID = i;
+				minCost = pLeastCost[i];
+			}
+		}
+		if (minID == -1) {
+			cout << "Error in Dijkstra() -- found not connected vertex !!" << endl;
+			break;
+		}
+		else {
+			pBFS_Process_Stat[minID] = SELECTED;
+			num_selected++;
+			/*
+			if (minID == target_vrtxid)
+			{
+			cout << "reached to the target node !!" << endl;
+			cout << "Least Cost = " << minCost << endl;
+			vrtxID = minID;
+			do {
+			vrtx = pVrtxArray[vrtxID];
+			path.push_front(vrtx);
+			vrtxID = pPrev[vrtxID];
+			} while (vrtxID != start_vrtxid);
+			vrtx = pVrtxArray[vrtxID];
+			path.push_front(vrtx); // start node
+			break;
+			}
+			*/
+		}
+		int pLS, ppDistMtrx_i;
+		for (int i = 0; i<num_nodes; i++)
+		{
+			pLS = pLeastCost[i];
+			ppDistMtrx_i = ppDistMtrx[minID][i];
+
+			if ((pBFS_Process_Stat[i] != SELECTED) &&
+				(pLeastCost[i] >(pLeastCost[minID] + ppDistMtrx[minID][i])))
+			{
+				pParent[i] = minID;
+				pLeastCost[i] = pLeastCost[minID] + ppDistMtrx[minID][i];
+			}
+		}
+		// print out the pLeastCost[] for debugging
+		for (int i = 0; i<num_nodes; i++)
+		{
+			cost = pLeastCost[i];
+			if (cost == PLUS_INF)
+				cout << setw(2) << i << " +oo, ";
+			else
+				cout << setw(2) << i << setw(5) << pLeastCost[i] << ", ";
+		} cout << endl;
+	} // end while()
 }
 
-//marking utility *****************************************************************************************************
+// M A R K I N G _ U T I L I T I E S *************************************************************
 
 void BreadthFirstSearch::visit(Vertex & v)
 {
@@ -314,6 +379,26 @@ EdgeStatus BreadthFirstSearch::getEdgeStatus(Edge & e)
 	}
 }
 
+// I N I T I A L I Z E ***************************************************************************
+
+
+//template<typename G>
+void BreadthFirstSearch::initialize()
+{
+	VertexList verts;
+	graph.vertices(verts);
+	for (VertexItor pv = verts.begin(); pv != verts.end(); ++pv)
+	{
+		unvisit(*pv);
+	}
+	EdgeList edges;
+	graph.edges(edges);
+	for (EdgeItor pe = edges.begin(); pe != edges.end(); ++pe)
+		unvisit(*pe);
+
+	done = false;
+}
+
 void BreadthFirstSearch::initDistMtrx()
 {
 	int** ppDistMtrx;
@@ -323,16 +408,16 @@ void BreadthFirstSearch::initDistMtrx()
 	EdgeList* pAdjLstArray;
 	int curVrtx_ID, vrtxID;
 
+
 	num_nodes = graph.getNumVertices();
 	pVrtxArray = graph.getpVrtxArray();
 	pAdjLstArray = graph.getpAdjLstArray();
-
 	ppDistMtrx = getppDistMtrx();
-	for (int i = 0; i < num_nodes; i++) {
+	for (int i = 0; i<num_nodes; i++) {
 		curVrtx_ID = pVrtxArray[i].getID();
 		EdgeItor pe = pAdjLstArray[curVrtx_ID].begin();
 		while (pe != pAdjLstArray[curVrtx_ID].end()) {
-			vrtxID = (*(*pe).getpVrtx_2()).getID();
+			vrtxID = ((*pe).getVertex_2()).getID();
 			ppDistMtrx[curVrtx_ID][vrtxID] = (*pe).getDistance();
 			pe++;
 		}
@@ -349,24 +434,23 @@ void BreadthFirstSearch::printDistMtrx()
 	num_nodes = graph.getNumVertices();
 	ppDistMtrx = getppDistMtrx();
 
-	cout << "   |";
-	for (int i = 0; i < num_nodes; i++) {
+	cout << " |";
+	for (int i = 0; i<num_nodes; i++) {
 		cout << setw(5) << (char)(i + 'A');
 	}
 	cout << endl;
-
 	cout << "----+";
-	for (int i = 0; i < num_nodes; i++) {
+	for (int i = 0; i<num_nodes; i++) {
 		cout << "-----";
 	}
 	cout << endl;
 
-	for (int i = 0; i < num_nodes; i++) {
+	for (int i = 0; i<num_nodes; i++) {
 		cout << setw(2) << (char)(i + 'A') << " |";
-		for (int j = 0; j < num_nodes; j++) {
+		for (int j = 0; j<num_nodes; j++) {
 			dist = ppDistMtrx[i][j];
 			if (dist == PLUS_INF)
-				cout << "  +oo";
+				cout << " +oo";
 			else
 				cout << setw(5) << dist;
 		}
@@ -375,10 +459,17 @@ void BreadthFirstSearch::printDistMtrx()
 	cout << endl;
 }
 
-//findShortestPath & ShortestPathsTree **************************************************************************
+// C O M M O N _ M E T H O D S *******************************************************************
 
-void BreadthFirstSearch::findShortestPath(Vertex & s, Vertex & t, VertexList & path)
+//template<typename G>
+void BreadthFirstSearch::findShortestPath(Vertex &s, Vertex &target, VertexList& path)
 {
+	initialize();
+	path.clear();
+	start = s;
+	initDistMtrx();
+	printDistMtrx();
+	bfsTraversal(start, target, path);
 }
 
 void BreadthFirstSearch::ShortestPathsTree(Vertex & s)
