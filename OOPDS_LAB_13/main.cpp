@@ -79,7 +79,7 @@ void main()
 	Graph simpleGraph(NUM_NODES);
 
 	cout << "Inserting vertices .." << endl;
-	for (int i = 0; i<NUM_NODES; i++) {
+	for (int i = 0; i < NUM_NODES; i++) {
 		simpleGraph.insertVertex(v[i]);
 	}
 
@@ -94,7 +94,7 @@ void main()
 	cout << endl;
 
 	cout << "Inserting edges .." << endl;
-	for (int i = 0; i<NUM_EDGES; i++)
+	for (int i = 0; i < NUM_EDGES; i++)
 	{
 		simpleGraph.insertEdge(edges[i]);
 	}
@@ -135,14 +135,14 @@ void main()
 	networkTopology.initialize();
 	networkTopology.initDistMtrx();
 	pppDL = new DataLink**[num_nodes];
-	for (int i = 0; i<num_nodes; i++)
+	for (int i = 0; i < num_nodes; i++)
 	{
 		pppDL[i] = new DataLink*[num_nodes];
 	}
 	ppDistMtrx = networkTopology.getppDistMtrx();
 
-	for (int i = 0; i<num_nodes; i++) {
-		for (int j = 0; j<num_nodes; j++)
+	for (int i = 0; i < num_nodes; i++) {
+		for (int j = 0; j < num_nodes; j++)
 		{
 			if (i == j)
 			{
@@ -161,7 +161,7 @@ void main()
 
 	EnterCriticalSection(&crit);
 	cout << "==== Generating " << num_nodes << " threads ... ==== " << endl;
-	for (int node_id = 0; node_id<num_nodes; node_id++)
+	for (int node_id = 0; node_id < num_nodes; node_id++)
 	{
 		pThrParam = new ThreadParam;
 		pThrParam->id = node_id;
@@ -183,7 +183,7 @@ void main()
 	LeaveCriticalSection(&crit);
 
 	DWORD nExitCode = NULL;
-	for (int i = 0; i<num_nodes; i++)
+	for (int i = 0; i < num_nodes; i++)
 	{
 		WaitForSingleObject(hThreadPktRouter[i], INFINITE);
 		GetExitCodeThread(hThreadPktRouter[i], &nExitCode);
@@ -301,7 +301,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 	}
 	*/
 	LeaveCriticalSection(pThrParam->pCS);
-	
+
 
 	// packet forwarding as transit node and packet processing as destination node
 	int source;
@@ -309,7 +309,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 	int received_by_this_node = 0;
 	int hop_count;
 
-	while ((*pTotal_received < (num_nodes * num_nodes)) ) //&& (received_by_this_node < num_nodes)
+	while ((*pTotal_received < (num_nodes * num_nodes))) //&& (received_by_this_node < num_nodes)
 	{
 		for (int src = 0; src < num_nodes; src++)
 		{
@@ -317,7 +317,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 			pDL = pppDL[src][myNetAddr];
 			if (pDL == NULL)
 				continue;
-			
+
 			EnterCriticalSection(pThrParam->pCS);
 			Packet newPkt = pDL->front(), *pNewPkt = &newPkt;
 			if (pNewPkt->getSeqNo() == -1)
@@ -328,7 +328,7 @@ DWORD WINAPI Thread_PacketRouter(LPVOID pParam)
 			pDL->dequeue();
 			LeaveCriticalSection(pThrParam->pCS);
 			pNewPkt->pushRouteNode(myNetAddr);
-			
+
 			if (pNewPkt->getDstAddr() == myNetAddr)
 			{
 				EnterCriticalSection(pThrParam->pCS);

@@ -9,11 +9,9 @@ class DataLink {
 private:
 	CRITICAL_SECTION queue_mutex; // Mutex for queue input & output operations
 	queue<Packet> pktQ; // Packet Queue
-	int size;
 public:
 	DataLink(void) { // Constructor
 		InitializeCriticalSection(&queue_mutex);
-		size = 0;
 	}
 	~DataLink(void) { // Destructor
 					  // Nothing to do here
@@ -23,7 +21,6 @@ public:
 		EnterCriticalSection(&queue_mutex); // Try to lock down queue
 											// int currentSize = pktQ.size(); // for test only
 		pktQ.push(pkt); // Push message into mailbox
-		size++;
 		LeaveCriticalSection(&queue_mutex); // Unlock queue
 	}
 	void dequeue() {
@@ -36,7 +33,6 @@ public:
 		else { // Otherwise, grab the message
 			pktQ.pop(); // Pop of least recent message
 		}
-		size--;
 		LeaveCriticalSection(&queue_mutex); // Unlock queue
 	}
 	// Peek at single message from a mailbox
@@ -56,10 +52,6 @@ public:
 			return true;
 		else
 			return false;
-	}
-	int getSize()
-	{
-		return size;
 	}
 };
 #endif
